@@ -267,13 +267,15 @@ def workload_pretty_name(workload):
 
 def git_diff_text(workload, N=24):
 
+    from django.utils.html import escape, mark_safe
+
     dev_name = workload.dev.name
     dev_name = dev_name[:N] + '...' if len(dev_name) > N else dev_name
 
     base_name = workload.base.name
     base_name = base_name[:N] + '...' if len(base_name) > N else base_name
 
-    return '%s vs %s' % (dev_name, base_name)
+    return mark_safe('%s <span class="diff-vs">vs</span> %s' % (escape(dev_name), escape(base_name)))
 
 
 def test_is_smp_odds(test):

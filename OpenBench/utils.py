@@ -186,7 +186,7 @@ def get_awaiting_tests():
 
 def getRecentMachines(minutes=5):
     target = datetime.datetime.utcnow()
-    target = target.replace(tzinfo=timezone.utc)
+    target = target.replace(tzinfo=datetime.timezone.utc)
     target = target - datetime.timedelta(minutes=minutes)
     return Machine.objects.filter(updated__gte=target)
 
