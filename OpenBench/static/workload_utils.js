@@ -16,10 +16,13 @@ function copy_text(text) {
     }
 }
 
-function copy_text_from_element(element_id, keep_url) {
+function copy_text_from_element(element_id, keep_url, code_fence) {
 
     var text = document.getElementById(element_id).innerHTML;
     text = text.replace(/<br>/g, "\n");
+
+    if (code_fence)
+        text = "```\n" + text.trim() + "\n```";
 
     if (keep_url)
         text += "\n" + window.location.href;
