@@ -28,10 +28,14 @@
     ],
 
     "engines" : [
+        "Bannou",
         "Rose",
+        "Sirius",
         "Soul",
         "Stash",
+        "Stockfish",
         "Stormphrax",
+        "Weiss",
         "Yukari"
     ]
 }
