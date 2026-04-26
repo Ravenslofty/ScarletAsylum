@@ -7,7 +7,19 @@
             <div class="pages">
                 {% for page in paging.pages %}
                     {% if page == "..." %}
-                        <span class="page ellipsis"><i class="fa-solid fa-fw fa-1x fa-ellipsis"></i></span>
+                        <span class="page ellipsis" style="cursor: pointer; min-width: 2.2rem; display: flex; align-items: center; justify-content: center;">
+                            <span class="dots-label" onclick="this.style.display='none'; var i=this.nextElementSibling; i.style.display='inline-block'; i.focus();">
+                                <i class="fa-solid fa-fw fa-1x fa-ellipsis"></i>
+                            </span>
+                            <input type="text" 
+                                   inputmode="numeric"
+                                   pattern="[0-9]*"
+                                   class="jump-input" 
+                                   style="display: none;" 
+                                   placeholder="#"
+                                   onblur="this.style.display='none'; this.previousElementSibling.style.display='inline-block';"
+                                   onkeyup="if(event.key==='Enter' && this.value) window.location.href='/{{ paging.url }}/'+this.value+'/'; if(event.key==='Escape') this.blur();">
+                        </span>
                     {% elif page == paging.page %}
                         <a class="page current" href="/{{ paging.url }}/{{ page }}">{{ page }}</a>
                     {% else %}
