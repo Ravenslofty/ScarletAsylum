@@ -1,6 +1,6 @@
 {
     "client_version"     : 45,
-    "client_repo_url"    : "https://github.com/AndyGrant/OpenBench",
+    "client_repo_url"    : "https://github.com/Ravenslofty/ScarletAsylum",
     "client_repo_ref"    : "master",
 
     "fastchess_min_version" : "1.8.1",
@@ -28,25 +28,10 @@
     ],
 
     "engines" : [
-        "4ku",
-        "Berserk",
-        "Bit-Genie",
-        "BlackMarlin",
-        "Demolito",
-        "Drofa",
-        "Equisetum",
-        "Ethereal",
-        "FabChess",
-        "Halogen",
-        "Igel",
-        "Koivisto",
-        "Laser",
-        "RubiChess",
-        "Seer",
+        "Rose",
+        "Soul",
         "Stash",
-        "Stockfish",
-        "Weiss",
-        "Winter",
-        "Zahak"
+        "Stormphrax",
+        "Yukari"
     ]
 }
