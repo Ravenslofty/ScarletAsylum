@@ -6,7 +6,7 @@
 
     "build": {
         "path": "",
-        "compilers": ["cargo>=1.94.1"],
+        "compilers": ["cargo>=1.95.0"],
         "cpuflags": [],
         "systems": ["Linux", "Windows"]
     },
