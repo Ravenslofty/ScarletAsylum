@@ -985,9 +985,3 @@ def api_workload_results(request, workload_id):
     truncated, results_json = fetch_results(workload_id, force=True)
     return JsonResponse({'results' : results_json})
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                BUSINESS VIEWS                               #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-def buyEthereal(request):
-    return render(request, 'buyEthereal.html')
