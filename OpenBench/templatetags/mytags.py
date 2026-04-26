@@ -19,7 +19,11 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 import django
+import html
+import json
 import re
+
+from django.utils.safestring import mark_safe
 
 import OpenBench.config
 import OpenBench.models
@@ -208,6 +212,213 @@ def machine_name(machine_id):
     except: return 'None'
 
 
+def llr_history_graph(test, width=320, height=112):
+
+    if test.test_mode != 'SPRT':
+        return ''
+
+    history = list(OpenBench.utils.load_llr_history(test))
+    
+    # Ensure graph starts at 0,0
+    if not history or history[0][0] != 0:
+        history.insert(0, [0, 0.0])
+
+    # Ensure current point is the latest in history
+    if history[-1][0] != test.games or history[-1][1] != test.currentllr:
+        history.append([test.games, test.currentllr])
+
+    x_max = max(max(p[0] for p in history), 1)
+
+    # ──── Symmetry and Boundary Logic ────
+    # We want 0.0 to be the dead-center. 
+    # Find the largest absolute extent including current bounds and historical data.
+    obs_max = max(abs(test.lowerllr), abs(test.upperllr), max(abs(p[1]) for p in history))
+    
+    # Add a minimum scale and some padding
+    extent = max(obs_max * 1.15, 0.5)
+    y_min, y_max = -extent, extent
+
+    L, R, T, B = 8, 8, 8, 8
+    iw = max(width  - L - R, 1)
+    ih = max(height - T - B, 1)
+    sx = lambda v: L + iw * (v / x_max)
+    sy = lambda v: T + ih * (1.0 - (v - y_min) / (y_max - y_min))
+
+    pts = [{'g': g, 'l': round(l, 4), 'x': round(sx(g), 2), 'y': round(sy(l), 2)}
+           for g, l in history]
+
+    def cross(a, b):
+        denom = (b['l'] - a['l'])
+        if abs(denom) < 1e-7: return None
+        r = -a['l'] / denom
+        return {'g': a['g'] + r * (b['g'] - a['g']), 'l': 0.0,
+                'x': round(a['x'] + r * (b['x'] - a['x']), 2),
+                'y': round(sy(0.0), 2)}
+
+    pos_segs, neg_segs = [], []
+    seg = [pts[0]]
+    seg_pos = pts[0]['l'] >= 0.0
+    for i in range(1, len(pts)):
+        a, b = pts[i - 1], pts[i]
+        b_pos = b['l'] >= 0.0
+        if b_pos == seg_pos:
+            seg.append(b)
+            continue
+        c = cross(a, b)
+        if c: seg.append(c)
+        if len(seg) >= 2:
+            (pos_segs if seg_pos else neg_segs).append(seg)
+        seg = [c, b] if c else [b]
+        seg_pos = b_pos
+    if len(seg) >= 2:
+        (pos_segs if seg_pos else neg_segs).append(seg)
+
+    def polyline(cls, segments):
+        return ''.join(
+            '<polyline class="%s" points="%s"/>' %
+            (cls, ' '.join('%.2f,%.2f' % (p['x'], p['y']) for p in s))
+            for s in segments)
+
+    y_mid = 0.0
+    grid = []
+    # Grid lines at top, center, bottom
+    for v in (y_max, 0.0, y_min):
+        y = sy(v)
+        grid.append('<line class="llr-grid" x1="%d" y1="%.2f" x2="%d" y2="%.2f"/>'
+                    % (L, y, width - R, y))
+    # Time grid lines
+    for v in (x_max / 4.0, x_max / 2.0, 3.0 * x_max / 4.0):
+        x = sx(v)
+        grid.append('<line class="llr-grid" x1="%.2f" y1="%d" x2="%.2f" y2="%d"/>'
+                    % (x, T, x, height - B))
+
+    guides = []
+    for v, cls in ((test.lowerllr, 'llr-bound'), (0.0, 'llr-zero'), (test.upperllr, 'llr-bound')):
+        y = sy(v)
+        guides.append('<line class="%s" x1="%d" y1="%.2f" x2="%d" y2="%.2f"/>'
+                        % (cls, L, y, width - R, y))
+
+    last = pts[-1]
+    title = 'LLR %.2f after %d games' % (test.currentllr, test.games)
+    history_json = html.escape(json.dumps(pts, separators=(',', ':')))
+
+    svg = (
+        '<div class="llr-history-widget" data-history="%s">'
+        '<div class="llr-history-chart">'
+        '<div class="llr-history-yaxis"><div>%.2f</div><div>0.00</div><div>%.2f</div></div>'
+        '<div class="llr-history-main">'
+        '<div class="llr-history-plot">'
+        '<svg class="llr-history-graph" viewBox="0 0 %d %d" width="%d" height="%d" '
+        'role="img" aria-label="%s">'
+        '<title>%s</title>'
+        '<rect class="llr-bg" x="0" y="0" width="%d" height="%d" rx="5"/>'
+        '%s%s%s%s'
+        '<line class="llr-hover-line" x1="%.2f" y1="%d" x2="%.2f" y2="%d"/>'
+        '<circle class="llr-hover-point" cx="%.2f" cy="%.2f" r="3"/>'
+        '<rect class="llr-hitbox" x="0" y="0" width="%d" height="%d" rx="5"/>'
+        '</svg>'
+        '<div class="llr-history-tooltip"></div>'
+        '</div>'
+        '<div class="llr-history-xaxis"><div>0</div><div>%d</div><div>%d g</div></div>'
+        '</div></div></div>'
+    ) % (
+        history_json,
+        y_max, y_min,
+        width, height, width, height,
+        html.escape(title), html.escape(title),
+        width, height,
+        ''.join(grid), ''.join(guides),
+        polyline('llr-path llr-path-pos', pos_segs),
+        polyline('llr-path llr-path-neg', neg_segs),
+        last['x'], T, last['x'], height - B,
+        last['x'], last['y'],
+        width, height,
+        int(round(x_max / 2.0)), x_max,
+    )
+    return mark_safe(svg)
+
+
+def spsa_history_graph(test, width=320, height=300):
+
+    if test.test_mode != 'SPSA':
+        return ''
+
+    history = OpenBench.utils.get_spsa_history(test)
+    if not history:
+        return ''
+
+    scaled = {
+        name: [[g, v * 100.0] for g, v in series]
+        for name, series in history.items()
+        if series
+    }
+
+    all_values = [v for series in scaled.values() for _, v in series]
+    if not all_values:
+        return ''
+
+    y_min, y_max = min(all_values), max(all_values)
+    span = y_max - y_min
+    pad = max(span * 0.10, 1.0)
+    y_min, y_max = y_min - pad, y_max + pad
+
+    x_max = max(max(pt[0] for series in scaled.values() for pt in series), 1)
+
+    L, R, T, B = 8, 8, 8, 8
+    iw = max(width - L - R, 1)
+    ih = max(height - T - B, 1)
+
+    sx = lambda x: L + iw * (x / x_max)
+    sy = lambda y: T + ih * (1.0 - (y - y_min) / (y_max - y_min))
+
+    colors = ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac"]
+
+    paths = []
+    for idx, (name, series) in enumerate(scaled.items()):
+        if len(series) < 2:
+            continue
+
+        pts_str = ' '.join('%.2f,%.2f' % (round(sx(g), 2), round(sy(v), 2)) for g, v in series)
+        color = colors[idx % len(colors)]
+        
+        paths.append(
+            '<polyline class="spsa-path" stroke="%s" points="%s"><title>%s</title></polyline>' % (color, pts_str, name)
+        )
+
+    y_mid = (y_min + y_max) / 2.0
+    x_mid = x_max / 2.0
+
+    grid = []
+    for val in [y_max, y_mid, y_min]:
+        y = sy(val)
+        grid.append('<line class="spsa-grid" x1="%d" y1="%.2f" x2="%d" y2="%.2f"/>' % (L, y, width - R, y))
+
+    x = sx(x_mid)
+    grid.append('<line class="spsa-grid" x1="%.2f" y1="%d" x2="%.2f" y2="%d"/>' % (x, T, x, height - B))
+
+    svg = (
+        '<div class="spsa-history-widget">'
+        '<div class="spsa-history-chart">'
+        '<div class="spsa-history-yaxis"><div>%.1f%%</div><div>%.1f%%</div><div>%.1f%%</div></div>'
+        '<div class="spsa-history-main">'
+        '<div class="spsa-history-plot">'
+        '<svg class="spsa-history-graph" viewBox="0 0 %d %d" width="%d" height="%d">'
+        '<rect class="spsa-bg" x="0" y="0" width="%d" height="%d" rx="5"/>'
+        '%s%s'
+        '</svg>'
+        '</div>'
+        '<div class="spsa-history-xaxis"><div>0</div><div>%d</div><div>%d g</div></div>'
+        '</div></div></div>'
+    ) % (
+        y_max, y_mid, y_min,
+        width, height, width, height,
+        width, height,
+        ''.join(grid), ''.join(paths),
+        int(round(x_max / 2.0)), int(x_max)
+    )
+    return mark_safe(svg)
+
+
 register = django.template.Library()
 register.filter('oneDigitPrecision', oneDigitPrecision)
 register.filter('twoDigitPrecision', twoDigitPrecision)
@@ -225,6 +436,8 @@ register.filter('cpuflagsBlock', cpuflagsBlock)
 register.filter('compilerBlock', compilerBlock)
 register.filter('removePrefix', removePrefix)
 register.filter('machine_name', machine_name)
+register.filter('llr_history_graph', llr_history_graph)
+register.filter('spsa_history_graph', spsa_history_graph)
 
 def book_download_link(workload):
     if workload.book_name in OpenBench.config.OPENBENCH_CONFIG['books']:

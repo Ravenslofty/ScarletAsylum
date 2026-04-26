@@ -145,6 +145,105 @@ def read_git_credentials(engine):
 def path_join(*args):
     return "/".join([f.lstrip("/").rstrip("/") for f in args]).rstrip('/')
 
+
+# ──── History Utilities ────
+
+LLR_HISTORY_SIZE = 120
+SPSA_HISTORY_SIZE = 120
+
+def llr_history_path(test_id):
+    return os.path.join(MEDIA_ROOT, 'llr_history', '%d.json' % test_id)
+
+def spsa_history_path(test_id):
+    return os.path.join(MEDIA_ROOT, 'spsa_history', '%d.json' % test_id)
+
+def load_llr_history(test):
+    path = llr_history_path(test.id)
+    if not os.path.exists(path):
+        return [[0, 0.0]]
+    try:
+        with open(path) as fin:
+            history = json.load(fin)
+        return history or [[0, 0.0]]
+    except Exception:
+        return [[0, 0.0]]
+
+def load_spsa_history(test):
+    path = spsa_history_path(test.id)
+    if os.path.exists(path):
+        try:
+            with open(path) as fin:
+                history = json.load(fin)
+            if history:
+                return history
+        except Exception:
+            pass
+    # Initialize with 0 point for all parameters
+    return {
+        param.name: [[0, 0.0]] for param in test.spsa_run.parameters.order_by('index')
+    }
+
+def get_spsa_history(test):
+    return load_spsa_history(test)
+
+def downsample_history(history, target_size, is_spsa=False):
+    N = len(history)
+    if N <= target_size or target_size < 2:
+        return history
+    buckets = target_size - 2
+    step = (N - 2) / float(buckets)
+    out = [history[0]]
+    for i in range(buckets):
+        lo = int(i * step) + 1
+        hi = max(int((i + 1) * step) + 1, lo + 1)
+        bucket = history[lo:hi]
+        if not bucket: continue
+        if is_spsa:
+            out.append(bucket[-1])
+        else:
+            out.append(max(bucket, key=lambda p: abs(p[1])))
+    out.append(history[-1])
+    return out
+
+def record_llr_history(test):
+    history = load_llr_history(test)
+    point = [test.games, round(test.currentllr, 4)]
+    if history and history[-1][0] == point[0]:
+        history[-1] = point
+    else:
+        history.append(point)
+    if not history or history[0][0] != 0:
+        history.insert(0, [0, 0.0])
+    if len(history) >= LLR_HISTORY_SIZE * 2:
+        history = downsample_history(history, LLR_HISTORY_SIZE, is_spsa=False)
+    path = llr_history_path(test.id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as fout:
+        json.dump(history, fout)
+
+def record_spsa_history(test):
+    history = load_spsa_history(test)
+    for param in test.spsa_run.parameters.order_by('index'):
+        history.setdefault(param.name, [[0, 0.0]])
+        if test.games <= history[param.name][-1][0]:
+            continue
+        
+        # Scale movement as % of total allowed range
+        denom = param.max_value - param.min_value
+        val = (param.value - param.start) / denom if denom != 0.0 else 0.0
+        history[param.name].append([test.games, round(val, 5)])
+        
+        if len(history[param.name]) >= SPSA_HISTORY_SIZE * 2:
+            history[param.name] = downsample_history(
+                history[param.name], SPSA_HISTORY_SIZE, is_spsa=True
+            )
+    
+    path = spsa_history_path(test.id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as fout:
+        json.dump(history, fout)
+
+
 def extract_option(options, option):
 
     match = re.search(r'(?<={0}=")[^"]*'.format(option), options)
@@ -469,6 +568,8 @@ def update_test(request, machine):
             test.failed   = test.currentllr < test.lowerllr
             test.finished = test.passed or test.failed
 
+            record_llr_history(test)
+
         elif test.test_mode == 'GAMES':
 
             # Finish test once we've played the proper amount of games
@@ -487,6 +588,8 @@ def update_test(request, machine):
             SPSAParameter.objects.bulk_update(parameters, ['value'])
 
             test.finished = test.games >= 2 * test.spsa_run.pairs_per * test.spsa_run.iterations
+            
+            record_spsa_history(test)
 
         elif test.test_mode == 'DATAGEN':
 

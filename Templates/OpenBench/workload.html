@@ -10,7 +10,72 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             populate_results({{results|safe}});
+            init_llr_history_widgets();
         });
+
+        function init_llr_history_widgets() {
+            // SPRT hover tracking
+            document.querySelectorAll('.llr-history-widget').forEach(function(widget) {
+                var history = JSON.parse(widget.dataset.history || '[]');
+                if (!history.length) return;
+
+                var svg     = widget.querySelector('.llr-history-graph');
+                var plot    = widget.querySelector('.llr-history-plot');
+                var line    = widget.querySelector('.llr-hover-line');
+                var dot     = widget.querySelector('.llr-hover-point');
+                var tip     = widget.querySelector('.llr-history-tooltip');
+                var hitbox  = widget.querySelector('.llr-hitbox');
+                var vb      = svg.viewBox.baseVal;
+
+                var peaks = {};
+                for (var i = 1; i < history.length - 1; i++) {
+                    var p = history[i - 1].l, c = history[i].l, n = history[i + 1].l;
+                    if ((c > p && c > n) || (c < p && c < n)) peaks[history[i].g] = true;
+                }
+
+                function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+                function show(p) {
+                    line.setAttribute('x1', p.x); line.setAttribute('x2', p.x);
+                    dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+                    dot.classList.toggle('pos', p.l >= 0);
+                    dot.classList.toggle('neg', p.l <  0);
+                    line.classList.add('active'); dot.classList.add('active');
+                    tip.textContent = p.g.toLocaleString() + ' games  LLR ' + p.l.toFixed(2);
+                    tip.classList.add('active');
+                    var rect = svg.getBoundingClientRect();
+                    var px = (p.x / vb.width)  * rect.width;
+                    var py = (p.y / vb.height) * rect.height;
+                    var left = clamp(px + 10, 6, rect.width  - tip.offsetWidth  - 6);
+                    var top  = clamp(py - tip.offsetHeight - 8, 4, rect.height - tip.offsetHeight - 4);
+                    tip.style.left = left + 'px';
+                    tip.style.top  = top  + 'px';
+                }
+
+                function hide() {
+                    line.classList.remove('active');
+                    dot.classList.remove('active', 'pos', 'neg');
+                    tip.classList.remove('active');
+                }
+
+                function nearest(clientX) {
+                    var rect = svg.getBoundingClientRect();
+                    var lx = ((clientX - rect.left) / rect.width) * vb.width;
+                    var best = history[0], bd = Math.abs(best.x - lx);
+                    var bestPeak = null, bpd = Infinity;
+                    for (var i = 0; i < history.length; i++) {
+                        var d = Math.abs(history[i].x - lx);
+                        if (d < bd) { best = history[i]; bd = d; }
+                        if (peaks[history[i].g] && d < bpd) { bestPeak = history[i]; bpd = d; }
+                    }
+                    return (bestPeak && bpd <= 5) ? bestPeak : best;
+                }
+
+                hitbox.addEventListener('mousemove', function(e) { show(nearest(e.clientX)); });
+                hitbox.addEventListener('mouseleave', hide);
+                hitbox.addEventListener('mouseenter', function(e) { show(nearest(e.clientX)); });
+            });
+        }
     </script>
 
 {% endblock %}
@@ -30,7 +95,9 @@
             <a class="diff-link" href="{{workload|gitDiffLink}}">diff</a>
         </h3>
 
-        <div class="workload-hero-group">
+        <div class="hero-row">
+
+        <div class="hero-left">
 
             {% if type == "TEST" or type == "DATAGEN" %}
                 <pre class="long-statblock" id="long-statblock">{{workload|longStatBlock|linebreaksbr}}</pre>
@@ -38,7 +105,7 @@
                 <pre class="long-statblock" id="long-statblock">{{workload|shortStatBlock|linebreaksbr}}</pre>
             {% endif %}
 
-            <div class="anchor-container">
+            <div class="anchor-container hero-actions">
                 {% if not workload.approved and profile.approver and profile.user.username != workload.author %}
                     <a class="anchorbutton btn-blue" href="/{{type|lower}}/{{workload.id}}/APPROVE">Approve</a>
                 {% elif not workload.approved and request.user.is_superuser %}
@@ -82,17 +149,31 @@
                 {% endif %}
             </div>
 
-    <div id="actions">
-        {% if workload.upload_pgns != "FALSE" or type == "TUNE" %}
-        <div class="anchor-container action-row-secondary">
-            {% if workload.upload_pgns != "FALSE" %}
-                <a class="anchorbutton btn-blue" href="/api/pgns/{{workload.id}}/">Download PGN</a>
-            {% endif %}
-            {% if type == "TUNE" %}
-                <a class="anchorbutton btn-blue" onclick="copy_spsa_inputs({{workload.id}})">SPSA Inputs</a>
-                <a class="anchorbutton btn-blue" onclick="copy_spsa_outputs({{workload.id}})">SPSA Outputs</a>
-            {% endif %}
         </div>
+
+        {% if workload.test_mode == "SPRT" %}
+            <div class="hero-right">
+                <div class="llr-history-label">LLR HISTORY</div>
+                {{workload|llr_history_graph}}
+            </div>
+        {% endif %}
+
+        </div>
+
+    </div>
+
+    <div id="actions">
+
+        {% if workload.upload_pgns != "FALSE" or type == "TUNE" %}
+            <div class="anchor-container action-row-secondary">
+                {% if workload.upload_pgns != "FALSE" %}
+                    <a class="anchorbutton btn-blue" href="/api/pgns/{{workload.id}}/">Download PGN</a>
+                {% endif %}
+                {% if type == "TUNE" %}
+                    <a class="anchorbutton btn-blue" onclick="copy_spsa_inputs({{workload.id}})">SPSA Inputs</a>
+                    <a class="anchorbutton btn-blue" onclick="copy_spsa_outputs({{workload.id}})">SPSA Outputs</a>
+                {% endif %}
+            </div>
         {% endif %}
 
         <form method="POST" action="/{{type|lower}}/{{workload.id}}/MODIFY/">
@@ -121,10 +202,10 @@
                     {% else %}
                         <input class="anchorbutton btn-disabled w-100" type="submit" name="submit" value="Modify">
                     {% endif %}
-                   </div>
                 </div>
-           </form>
-        </div>
+            </div>
+        </form>
+
     </div>
 
     {% if type == "TUNE" %}
@@ -153,6 +234,11 @@
                 <tbody id="spsa-digest-body-container" style="display: none;">
                 </tbody>
             </table>
+
+            <div class="mt-4">
+                <div class="llr-history-label">SPSA HISTORY (Normalized Range %)</div>
+                {{workload|spsa_history_graph}}
+            </div>
         </div>
     {% endif %}
 
