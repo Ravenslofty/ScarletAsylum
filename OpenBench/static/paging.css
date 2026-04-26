@@ -51,6 +51,31 @@
 
 .ellipsis, .fa-solid {
     /*margin: 0 4px;*/
-    pointer-events: none; /* Disable click events on ellipsis */
+    /* pointer-events: none; Disable click events on ellipsis */
     vertical-align: middle; /* Ensure icons are vertically centered */
 }
+
+.jump-input {
+    width: 42px;
+    height: 20px;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    color: var(--fg-cream);
+    border-radius: 3px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: textfield; /* hide arrows */
+}
+
+.jump-input:focus {
+    border-color: var(--fg-accent);
+    box-shadow: 0 0 5px oklch(60% 0.180 25 / 0.4);
+}
+
+/* Chrome/Safari/Edge hide arrows */
+.jump-input::-webkit-inner-spin-button, 
+.jump-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
