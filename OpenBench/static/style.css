@@ -128,7 +128,7 @@ body, html, main {
     line-height: 1.18;
     letter-spacing: -0.012em;
     text-transform: none;
-    margin-block: 0.4em 0.8em;
+    margin-block: 0.4em 0.2em;
     width: max-content;
 }
 
@@ -293,7 +293,7 @@ body, html, main {
 }
 
 #content th, #content td {
-    padding: 9px 12px 6px 12px;
+    padding: 8px 12px 6px 12px;
 }
 
 /* Buttons */
@@ -313,8 +313,8 @@ body, html, main {
 }
 
 #content .anchorbutton {
-    border-radius: 3px;
-    padding: 8px 0px 6px;
+    border-radius: 2px;
+    padding: 6px 0px 6px;
     border: 1px solid oklch(35% 0.060 18 / 0.6);
     color: var(--btn-text);
     display: inline-block;
@@ -393,30 +393,227 @@ body, html, main {
     color: var(--fg-2);
     border: 1px solid var(--line);
     border-radius: 4px;
-    padding: 0.55rem 0.80rem;
+    padding: 0.1rem 0.2rem;
     line-height: 1.5em;
 }
 
 /* Test views */
 
-#content #config {
-    float: left;
+#content .workload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.01rem;
+}
+
+#content .workload-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.01rem;
+    margin-top: 0;
+}
+
+#content .workload-hero-group {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    max-width: 100%;
+    gap: 6px;
+    margin-bottom: 1.2rem;
+}
+
+#content .workload-hero-group .long-statblock {
+    margin: 0;
+}
+
+#content .workload-hero-group form {
+    margin: 0;
+    width: 100%;
+}
+
+#content .workload-hero-group .form {
     background-color: var(--bg-panel);
     border: 1px solid var(--line);
     border-radius: 4px;
+    padding: 12px;
+    box-sizing: border-box;
 }
 
+#content .workload-hero-group .form .col-full {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#content .workload-hero-group .form .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+#content .workload-hero-group .form label {
+    color: var(--fg-2);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.9rem;
+}
+
+#content .workload-hero-group .form input:not([type="submit"]) {
+    background-color: var(--bg-deep);
+    border: 1px solid oklch(35% 0.060 18 / 0.5);
+    color: var(--fg-1);
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.9rem;
+    width: 110px;
+    outline: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#content .workload-hero-group .form input:not([type="submit"]):focus {
+    border-color: var(--fg-accent);
+    background-color: var(--bg-1);
+}
+
+#content .workload-hero-group .form input[type="submit"] {
+    margin-top: 4px;
+}
+
+#content .branch-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.3rem;
+    row-gap: 0.2rem;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 500;
+    font-size: 1.2rem;
+    line-height: 1.25;
+    letter-spacing: 0;
+    color: var(--fg-cream);
+    margin: 0 0 0.6rem 0;
+    white-space: normal;
+}
+
+#content .branch-title .branch-name {
+    color: var(--fg-glow);
+    font-style: normal;
+}
+
+#content .branch-title .branch-name:hover {
+    color: var(--fg-1);
+}
+
+#content .branch-title .diff-vs {
+    color: var(--fg-cream);
+    font-weight: 400;
+    font-size: 0.8em;
+    margin: 0;
+    letter-spacing: 0.04em;
+}
+
+#content .branch-title .diff-link {
+    font-size: 0.7em;
+    margin: 0 0 0 0.4em;
+    padding: 0;
+    color: oklch(80% 0.090 290);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transform: translateY(-0.08em);
+}
+
+#content .branch-title .diff-link:hover {
+    color: oklch(88% 0.110 290);
+}
+
+#content .workload-hero .long-statblock {
+    font-size: 1.00rem;
+    width: max-content;
+    max-width: 100%;
+}
+
+/* Actions row */
+
 #content #actions {
-    float: left;
+    float: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-width: 560px;
+    margin-bottom: 0.4rem;
+}
+
+#content #actions .anchor-container {
+    justify-content: flex-start;
+    gap: 0.3rem;
+}
+
+#content #actions .anchor-container > .anchorbutton {
+    flex: 0 0 auto;
+    margin-right: 0;
+    padding: 6px 14px 4px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+}
+
+#content #actions .anchor-container.action-row-secondary {
+    margin-top: 0.1rem;
 }
 
 #content #actions .form {
     background-color: var(--bg-panel);
     border: 1px solid var(--line);
     border-radius: 4px;
-    padding: 0.75rem 0.9rem;
-    margin-top: 0.5rem;
+    padding: 0.40rem 0.75rem;
+    margin-top: 0.1rem;
+    max-width: 380px;
 }
+
+#content #config.config-details {
+    float: none;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0;
+    overflow-x: auto;
+}
+
+#content #config.config-details > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.1rem 0.35rem;
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.0rem;
+    color: var(--fg-cream);
+    user-select: none;
+}
+
+#content #config.config-details > summary::-webkit-details-marker { display: none; }
+
+#content #config.config-details > summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 0.5em;
+    color: var(--fg-accent);
+    transition: transform 0.15s ease;
+}
+
+#content #config.config-details[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+#content #config.config-details[open] > summary {
+    border-bottom: 1px solid var(--line);
+}
+
+#content #config.config-details > table {
+    margin: 0;
+}
+
+#content #results { float: none; }
+#content #parameters { float: none; }
 
 #content #results {
     display: inline-block;
