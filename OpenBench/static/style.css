@@ -560,6 +560,20 @@ body, html, main {
     color: oklch(88% 0.110 290);
 }
 
+.diff-link {
+    font-size: 0.7em;
+    margin: 0 0 0 0.4em;
+    padding: 0;
+    color: oklch(80% 0.090 290) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transform: translateY(-0.08em);
+}
+
+.diff-link:hover {
+    color: oklch(88% 0.110 290) !important;
+}
+
 .tag {
     font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
     font-size: 0.7em;
