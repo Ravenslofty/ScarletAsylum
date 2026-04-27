@@ -3,14 +3,14 @@
 <td>{{test.dev_engine}}</td>
 <td>
     <a href="{{test|workload_url}}">{{test|prettyDevName}}</a>
-    {% if test|test_is_crash %} <span class="tag tag-crash" title="Crash">CRASH</span> {% endif %}
-    {% if test|test_is_flag %} <span class="tag tag-flag" title="Timeout">FLAG</span> {% endif %}
-    {% if test|test_is_fischer %} <span class="tag tag-frc" title="Fischer Random Chess">FRC</span> {% endif %}
-    {% if test|test_is_time_odds %} <span class="tag tag-time" title="Time odds">TIME ODDS</span> {% endif %}
-    {% if test|test_is_smp %} <span class="tag tag-smp" title="SMP">SMP</span> {% endif %}
-    {% if test|test_is_smp_odds %} <span class="tag tag-smp" title="SMP odds">SMP ODDS</span> {% endif %}
+    {% if test|test_is_crash %} <span class="tag tag-crash">CRASH</span> {% endif %}
+    {% if test|test_is_flag %} <span class="tag tag-flag">FLAG</span> {% endif %}
+    {% if test|test_is_fischer %} <span class="tag tag-frc">FRC</span> {% endif %}
+    {% if test|test_is_time_odds %} <span class="tag tag-time">TIME ODDS</span> {% endif %}
+    {% if test|test_is_smp %} <span class="tag tag-smp">SMP</span> {% endif %}
+    {% if test|test_is_smp_odds %} <span class="tag tag-smp">SMP ODDS</span> {% endif %}
 </td>
-<td class="textcenter"><a href="{{test|gitDiffLink}}">diff</a></td>
+<td class="textcenter"><a class="diff-link" href="{{test|gitDiffLink}}">diff</a></td>
 <td>
     {{test.dev_time_control}}
 </td>
