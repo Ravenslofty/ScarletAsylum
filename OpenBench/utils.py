@@ -550,6 +550,7 @@ def update_test(request, machine):
 
         # Consider only Crashes or Illegal moves as real errors
         test.error = bool(test.error or crashes or illegals)
+        test.timeloss = bool(test.timeloss or timelosses)
 
         if test.test_mode == 'SPRT':
 

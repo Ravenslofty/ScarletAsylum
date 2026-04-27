@@ -560,6 +560,31 @@ body, html, main {
     color: oklch(88% 0.110 290);
 }
 
+.tag {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.7em;
+    font-weight: 500;
+    margin: 0 0 0 0.4em;
+    padding: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transform: translateY(-0.08em);
+}
+
+.tag-frc {
+    color: oklch(80% 0.100 150);
+}
+
+.tag-time,
+.tag-smp {
+    color: oklch(75% 0.180 80);
+}
+
+.tag-crash,
+.tag-flag {
+    color: oklch(65% 0.20 350);
+}
+
 #content .hero-left .long-statblock {
     font-size: 1.00rem;
     width: max-content;
