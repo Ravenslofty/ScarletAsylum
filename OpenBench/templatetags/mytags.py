@@ -524,9 +524,9 @@ register.filter('git_diff_text', git_diff_text)
 register.filter('test_is_smp'       , test_is_smp       )
 register.filter('test_is_smp_odds'  , test_is_smp_odds  )
 register.filter('test_is_time_odds' , test_is_time_odds )
-register.filter('test_is_fischer'  , test_is_fischer   )
-register.filter('test_is_crash'   , test_is_crash   )
-register.filter('test_is_flag'   , test_is_flag   )
+register.filter('test_is_fischer'   , test_is_fischer   )
+register.filter('test_is_crash'     , test_is_crash     )
+register.filter('test_is_flag'      , test_is_flag      )
 
 
 @register.filter

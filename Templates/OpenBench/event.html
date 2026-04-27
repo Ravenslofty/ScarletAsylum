@@ -1,7 +1,32 @@
-<!DOCTYPE html>
+{% extends "OpenBench/base.html" %}
 
-<html lang="en">
-    <body>
-        <pre>{{content}}</pre>
-    </body>
-</html>
+{% load static %}
+
+{% block content %}
+
+<style>
+    .log-container {
+        background-color: var(--bg-panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1rem;
+        overflow: auto;
+        max-width: 100%;
+    }
+
+    .log-content {
+        font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 0.85rem;
+        color: var(--fg-cream);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+        line-height: 1.5;
+    }
+</style>
+
+<div class="log-container">
+    <pre class="log-content">{{content}}</pre>
+</div>
+
+{% endblock %}
