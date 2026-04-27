@@ -1,6 +1,6 @@
 {
     "private": false,
-    "nps": 759223,
+    "nps": 753192,
     "source": "https://github.com/yukarichess/yukari",
     "protocols": ["xboard", "uci"],
 

@@ -1,6 +1,6 @@
 {
     "private": false,
-    "nps": 3000000,
+    "nps": 2744070,
     "source": "https://github.com/Aethdv/Soul",
     "protocols": ["uci", "xboard"],
 
