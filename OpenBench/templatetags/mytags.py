@@ -491,16 +491,27 @@ def git_diff_text(workload, N=24):
     return mark_safe('%s <span class="diff-vs">vs</span> %s' % (escape(dev_name), escape(base_name)))
 
 
+def test_is_smp(test):
+    dev_threads  = int(OpenBench.utils.extract_option(test.dev_options , 'Threads'))
+    base_threads = int(OpenBench.utils.extract_option(test.base_options, 'Threads'))
+    return dev_threads > 1 and base_threads > 1
+
 def test_is_smp_odds(test):
     dev_threads  = int(OpenBench.utils.extract_option(test.dev_options , 'Threads'))
     base_threads = int(OpenBench.utils.extract_option(test.base_options, 'Threads'))
-    return dev_threads != base_threads
+    return (dev_threads > 1 and base_threads == 1) or (dev_threads == 1 and base_threads > 1)
 
 def test_is_time_odds(test):
     return test.dev_time_control != test.base_time_control
 
 def test_is_fischer(test):
     return 'FRC' in test.book_name.upper() or '960' in test.book_name.upper()
+
+def test_is_crash(test):
+    return test.error
+
+def test_is_flag(test):
+    return test.timeloss
 
 register.filter('book_download_link', book_download_link)
 register.filter('network_download_link', network_download_link)
@@ -510,9 +521,12 @@ register.filter('workload_pretty_name', workload_pretty_name)
 
 register.filter('git_diff_text', git_diff_text)
 
+register.filter('test_is_smp'       , test_is_smp       )
 register.filter('test_is_smp_odds'  , test_is_smp_odds  )
 register.filter('test_is_time_odds' , test_is_time_odds )
-register.filter('test_is_fischer'   , test_is_fischer   )
+register.filter('test_is_fischer'  , test_is_fischer   )
+register.filter('test_is_crash'   , test_is_crash   )
+register.filter('test_is_flag'   , test_is_flag   )
 
 
 @register.filter

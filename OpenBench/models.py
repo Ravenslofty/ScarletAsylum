@@ -171,6 +171,7 @@ class Test(Model):
     approved    = BooleanField(default=False)
     awaiting    = BooleanField(default=False)
     error       = BooleanField(default=False)
+    timeloss    = BooleanField(default=False)
 
     # Datetime house keeping for meta data
     creation    = DateTimeField(auto_now_add=True)
