@@ -21,6 +21,7 @@
 import datetime
 import hashlib
 import json
+import logging
 import math
 import os
 import random
@@ -151,6 +152,8 @@ def path_join(*args):
 LLR_HISTORY_SIZE = 120
 SPSA_HISTORY_SIZE = 120
 
+_logger = logging.getLogger(__name__)
+
 def llr_history_path(test_id):
     return os.path.join(MEDIA_ROOT, 'llr_history', '%d.json' % test_id)
 
@@ -164,9 +167,16 @@ def load_llr_history(test):
     try:
         with open(path) as fin:
             history = json.load(fin)
-        return history or [[0, 0.0]]
     except Exception:
+        _logger.warning("Failed to load LLR history %s", path, exc_info=True)
         return [[0, 0.0]]
+    if not isinstance(history, list):
+        _logger.warning("LLR history %s is not a list (got %s)", path, type(history).__name__)
+        return [[0, 0.0]]
+    if history and not all(isinstance(p, list) and len(p) == 2 for p in history):
+        _logger.warning("LLR history %s has malformed entries, resetting", path)
+        return [[0, 0.0]]
+    return history or [[0, 0.0]]
 
 def load_spsa_history(test):
     path = spsa_history_path(test.id)
@@ -174,10 +184,11 @@ def load_spsa_history(test):
         try:
             with open(path) as fin:
                 history = json.load(fin)
-            if history:
+            if isinstance(history, dict):
                 return history
+            _logger.warning("SPSA history %s is not a dict (got %s)", path, type(history).__name__)
         except Exception:
-            pass
+            _logger.warning("Failed to load SPSA history %s", path, exc_info=True)
     # Initialize with 0 point for all parameters
     return {
         param.name: [[0, 0.0]] for param in test.spsa_run.parameters.order_by('index')
@@ -218,8 +229,10 @@ def record_llr_history(test):
         history = downsample_history(history, LLR_HISTORY_SIZE, is_spsa=False)
     path = llr_history_path(test.id)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w') as fout:
+    tmppath = path + '.tmp'
+    with open(tmppath, 'w') as fout:
         json.dump(history, fout)
+    os.replace(tmppath, path)
 
 def record_spsa_history(test):
     history = load_spsa_history(test)
@@ -240,8 +253,10 @@ def record_spsa_history(test):
     
     path = spsa_history_path(test.id)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w') as fout:
+    tmppath = path + '.tmp'
+    with open(tmppath, 'w') as fout:
         json.dump(history, fout)
+    os.replace(tmppath, path)
 
 
 def extract_option(options, option):
