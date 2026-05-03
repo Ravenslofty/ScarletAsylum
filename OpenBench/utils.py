@@ -299,7 +299,7 @@ def get_awaiting_tests():
 
 
 def getRecentMachines(minutes=5):
-    target = datetime.datetime.utcnow()
+    target = datetime.datetime.now(datetime.UTC)
     target = target.replace(tzinfo=datetime.timezone.utc)
     target = target - datetime.timedelta(minutes=minutes)
     return Machine.objects.filter(updated__gte=target)
@@ -470,7 +470,7 @@ def network_download(request, engine, network):
     response = FileResponse(fwrapper, content_type='application/octet-stream')
 
     # Set all headers and return response
-    response['Expires'] = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).ctime()
+    response['Expires'] = (datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=7)).ctime()
     response['Content-Length'] = os.path.getsize(netfile)
     response['Content-Disposition'] = 'attachment; filename=' + network.sha256
     return response

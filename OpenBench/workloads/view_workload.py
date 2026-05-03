@@ -68,7 +68,7 @@ def fetch_results(workload, force):
         return True, []
 
     # One minute prior to now
-    target = datetime.datetime.utcnow()
+    target = datetime.datetime.now(datetime.UTC)
     target = target.replace(tzinfo=datetime.timezone.utc)
     target = target - datetime.timedelta(minutes=1)
 
