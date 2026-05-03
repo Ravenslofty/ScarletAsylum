@@ -6,7 +6,7 @@
     "build": {
         "path" : "",
         "compilers" : ["clang++"],
-        "cpuflags" : ["AVX512VNNI"],
+        "cpuflags" : [],
         "systems" : ["Linux", "Windows", "Darwin"]
     },
 
