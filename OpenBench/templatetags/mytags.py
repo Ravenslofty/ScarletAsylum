@@ -223,7 +223,9 @@ def llr_history_graph(test, width=320, height=112):
     if not history or history[0][0] != 0:
         history.insert(0, [0, 0.0])
 
-    # Ensure current point is the latest in history
+    # Trim stray points ahead of current DB state, then ensure current point is last
+    while len(history) > 1 and history[-1][0] > test.games:
+        history.pop()
     if history[-1][0] != test.games or history[-1][1] != test.currentllr:
         history.append([test.games, test.currentllr])
 
