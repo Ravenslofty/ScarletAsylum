@@ -166,7 +166,15 @@ def load_llr_history(test):
         return [[0, 0.0]]
     try:
         with open(path) as fin:
-            history = json.load(fin)
+            content = fin.read()
+        if not content:
+            return [[0, 0.0]]
+        decoder = json.JSONDecoder()
+        history, idx = decoder.raw_decode(content)
+        while idx < len(content) and content[idx].isspace():
+            idx += 1
+        if idx < len(content):
+            _logger.warning("LLR history %s has trailing data at char %d, salvaging first array", path, idx)
     except Exception:
         _logger.warning("Failed to load LLR history %s", path, exc_info=True)
         return [[0, 0.0]]
@@ -183,10 +191,19 @@ def load_spsa_history(test):
     if os.path.exists(path):
         try:
             with open(path) as fin:
-                history = json.load(fin)
-            if isinstance(history, dict):
-                return history
-            _logger.warning("SPSA history %s is not a dict (got %s)", path, type(history).__name__)
+                content = fin.read()
+            if not content:
+                pass
+            else:
+                decoder = json.JSONDecoder()
+                history, idx = decoder.raw_decode(content)
+                while idx < len(content) and content[idx].isspace():
+                    idx += 1
+                if idx < len(content):
+                    _logger.warning("SPSA history %s has trailing data at char %d, salvaging first object", path, idx)
+                if isinstance(history, dict):
+                    return history
+                _logger.warning("SPSA history %s is not a dict (got %s)", path, type(history).__name__)
         except Exception:
             _logger.warning("Failed to load SPSA history %s", path, exc_info=True)
     # Initialize with 0 point for all parameters
@@ -219,6 +236,8 @@ def downsample_history(history, target_size, is_spsa=False):
 def record_llr_history(test):
     history = load_llr_history(test)
     point = [test.games, round(test.currentllr, 4)]
+    while len(history) > 1 and history[-1][0] > test.games:
+        history.pop()
     if history and history[-1][0] == point[0]:
         history[-1] = point
     else:
@@ -584,8 +603,6 @@ def update_test(request, machine):
             test.failed   = test.currentllr < test.lowerllr
             test.finished = test.passed or test.failed
 
-            record_llr_history(test)
-
         elif test.test_mode == 'GAMES':
 
             # Finish test once we've played the proper amount of games
@@ -604,8 +621,6 @@ def update_test(request, machine):
             SPSAParameter.objects.bulk_update(parameters, ['value'])
 
             test.finished = test.games >= 2 * test.spsa_run.pairs_per * test.spsa_run.iterations
-            
-            record_spsa_history(test)
 
         elif test.test_mode == 'DATAGEN':
 
@@ -613,6 +628,11 @@ def update_test(request, machine):
             test.passed = test.finished = test.games >= test.max_games
 
         test.save()
+
+        if test.test_mode == 'SPRT':
+            record_llr_history(test)
+        elif test.test_mode == 'SPSA':
+            record_spsa_history(test)
 
         # Update Result object; No risk from concurrent access
         Result.objects.filter(id=result_id).update(
